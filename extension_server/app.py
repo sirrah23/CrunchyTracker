@@ -2,46 +2,35 @@ import os
 import json
 from flask import Flask, request
 from flask_cors import CORS
-import requests
+from token_manager import AnilistTokenManager
 
 # Initialize app
 app = Flask(__name__)
-CORS(app)
-
-token = None
+CORS(app)  #TODO: DEV mode only?
 
 # Set up config
 config_file_path = os.path.join(os.path.dirname(__file__), "config", "config.cfg")
 app.config.from_pyfile(config_file_path, silent=False)
 
+# Set up the token manager using the configurations
+token_manager = AnilistTokenManager(app.config["CLIENT_ID"], app.config["CLIENT_SECRET"], app.config["REDIRECT_URI"])
+
 # Routes...
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
-    if request.method == "POST":
-        print(request.data)
+    code = request.args.get("code")
+    if not code:
+        return "Something went wrong...", 400
+    res = token_manager.request_token(code)
+    if res:
+        return "Success", 200
     else:
-        global token
-        code = request.args.get("code")
-        if code:
-            token_response = requests.post("https://anilist.co/api/v2/oauth/token", data={
-                "grant_type": "authorization_code", 
-                "client_id": app.config["CLIENT_ID"], 
-                "client_secret": app.config["CLIENT_SECRET"], 
-                "redirect_uri": "http://localhost:5000",
-                "code": code
-            })
-            token = token_response.json()["access_token"]
-        return "Success"
+        return "Something went wrong...", 400
 
-@app.route("/get_auth_code_link", methods=["GET"])
-def get_auth_code_link():
-    if token:
-        print("We have a token: {}".format(token))
-    client_id = app.config["CLIENT_ID"]
-    redirect_uri = app.config["REDIRECT_URI"]
-    auth_url = "https://anilist.co/api/v2/oauth/authorize?client_id={}&redirect_uri={}&response_type=code".format(client_id, redirect_uri)
-    return json.dumps({"success": True, "data": auth_url})
-
-@app.route("/token_droppoint", methods=["POST"])
-def gather_token():
-   print(request.data) 
+@app.route("/get_auth_url_or_token", methods=["GET"])
+def get_auth_url_or_token():
+    if token_manager.have_access_token():
+        res = {"success": True, "type": "token", "data": token_manager.token}
+    else:
+        res = {"success": True, "type": "url", "data": token_manager.generate_auth_code_url()}
+    return json.dumps(res)
