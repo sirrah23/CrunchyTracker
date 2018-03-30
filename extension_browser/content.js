@@ -1,0 +1,1 @@
+browser.runtime.sendMessage({"message": Math.random().toString()});
