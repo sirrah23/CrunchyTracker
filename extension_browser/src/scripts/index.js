@@ -12,7 +12,9 @@ fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
             appendURLToApp(text, url);
 		} else if (res_json.type === "token") {
 			let text = computePopupTextContent("CRTitle", "No anime yet!");
+			let token = res_json.data;
             appendTextToApp(text);
+            queryAnimeByTitle(text, token);
 		}
 	});
 
@@ -36,3 +38,60 @@ function appendURLToApp(text, link){
     app_node.appendChild(auth_url_node);
 }
 
+function queryAnimeByTitle(title, access_token){
+	// Here we define our query as a multi-line string
+	// Storing it in a separate .graphql/.gql file is also possible
+	let query = `
+	query ($search: String) { # Define which variables will be used in the query (id)
+	  Media (search: $search) { # Insert our variables into the query arguments (id) (type: ANIME is hard-coded in the query)
+	    id
+	    title {
+	      romaji
+	      english
+	      native
+	    }
+	  }
+	}
+	`;
+
+	// Define our query variables and values that will be used in the query request
+	let variables = {
+	    "search": title
+	};
+
+	// Define the config we'll need for our Api request
+	let url = 'https://graphql.anilist.co',
+	    options = {
+	        method: 'POST',
+	        headers: {
+	            'Content-Type': 'application/json',
+	            'Accept': 'application/json',
+	            'Authorization': 'Bearer ' + access_token
+	        },
+	        body: JSON.stringify({
+	            query: query,
+	            variables: variables
+	        })
+	    };
+
+	// Make the HTTP Api request
+	fetch(url, options).then(handleResponse)
+	                   .then(handleData)
+	                   .catch(handleError);
+
+	function handleResponse(response) {
+	    return response.json().then(function (json) {
+	        return response.ok ? json : Promise.reject(json);
+	    });
+	}
+
+	function handleData(data) {
+	    console.log(data.data.Media.id);
+	    console.log(data.data.Media.title);
+	}
+
+	function handleError(error) {
+	    alert('Error, check console');
+	    console.log(error);
+	}
+}
