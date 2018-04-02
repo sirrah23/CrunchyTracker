@@ -22,6 +22,7 @@ fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
 			let text = computePopupTextContent("CRTitle", "No anime yet!");
 			let token = res_json.data;
             appendTextToApp(text);
+            queryCurrentUserId(token);
             //queryAnimeProgress(<media_id>, <user_id>, token);
 		}
 	});
@@ -86,6 +87,28 @@ function queryAnilistAPI(query, variables, access_token){
 
 	return fetch(url, options)
         .then(res => res.json());
+}
+
+
+/**
+ * Get the user id and user name for the
+ * currently authenticated user.
+ * @param {string} access_token Token used to access the Anilist API.
+ */
+function queryCurrentUserId(access_token){
+    const query =`
+    {
+        Viewer{
+            id,
+            name
+        }
+    }
+    `;
+
+    const variables = {};
+
+    queryAnilistAPI(query, variables, access_token)
+        .then(res => console.log(res));
 }
 
 /**
