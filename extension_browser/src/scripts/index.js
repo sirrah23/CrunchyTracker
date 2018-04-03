@@ -21,6 +21,7 @@ fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
 		} else if (res_json.type === "token") {
 			let text = computePopupTextContent("CRTitle", "No anime yet!");
 			let token = res_json.data;
+            if(text === "No anime yet!") return;
             appendTextToApp(text);
             const session_data = {}
             queryCurrentUserId(token)
