@@ -34,9 +34,15 @@ fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
                     return queryAnimeProgress(session_data.media_id, session_data.user_id, token)
                 })
                 .then(res => {
+                    session_data.id = res.data.MediaList.id;
+                    session_data.progress = res.data.MediaList.progress;
                     appendLineBreakToApp();
                     appendLineBreakToApp();
-                    appendTextToApp(res.data.MediaList.progress)
+                    //TODO: Make this a button element
+                    //TODO: Add a decrement button too
+                    //TODO: Mutate the value of progress on the screen in real time
+                    appendTextToApp(session_data.progress,
+                        increment_progress.bind(null, session_data.id, session_data.progress, token));
                 });
 		}
 	});
@@ -57,9 +63,16 @@ function computePopupTextContent(key, default_value){
  * Append a text node to the div with the app id
  * @param {string} text The text that popualtes the text node
  */
-function appendTextToApp(text){
+function appendTextToApp(text, onclick_func){
     const token_msg_node = document.createTextNode(text);
-    app_node.appendChild(token_msg_node);
+    let node_to_append = token_msg_node;
+    if (onclick_func){
+        const div_wrapper = document.createElement("div");
+        div_wrapper.onclick = onclick_func;
+        div_wrapper.appendChild(token_msg_node);
+        node_to_append = div_wrapper;
+    }
+    app_node.appendChild(node_to_append);
 }
 
 /**
@@ -144,6 +157,7 @@ function queryAnimeProgress(media_id, user_id, access_token){
 	const query =`
     query($mediaId: Int, $userId: Int){
         MediaList(mediaId: $mediaId, userId: $userId){
+            id,
             progress,
             status,
             media{
@@ -186,3 +200,39 @@ function queryAnimeMediaId(anime_name, access_token){
     return queryAnilistAPI(query, variables, access_token)
 }
 
+
+/**
+ * Mutate a media list entries progress field to whatever
+ * value you want.
+ * @param {int} id Id of the media list entry to mutate
+ * @param {int} progress New progress value to set for the media list entry
+ * @param {string} access_token OAuth token for accessing the api
+ */
+function mutateMediaListEntityProgress(id, progress, access_token){
+    const mutation =`
+    mutation($ids: [Int], $progress: Int){
+        UpdateMediaListEntries(ids: $ids, progress: $progress){
+            userId,
+            mediaId,
+            progress
+        }
+    }
+    `;
+
+    const variables = {
+        "ids": [id],
+        "progress": progress
+    }
+
+    return queryAnilistAPI(mutation, variables, access_token);
+}
+
+/**
+ * Increment whatever the input progerss is by one and call the API to make that update as well.
+ * @param {int} id Id of the media list entry to mutate
+ * @param {int} progress New progress value to increment and set for the media list entry
+ * @param {string} access_token OAuth token for accessing the api
+ */
+function increment_progress(id, progress, access_token){
+    return mutateMediaListEntityProgress(id, progress+1, access_token)
+}
