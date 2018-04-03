@@ -22,8 +22,21 @@ fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
 			let text = computePopupTextContent("CRTitle", "No anime yet!");
 			let token = res_json.data;
             appendTextToApp(text);
-            queryCurrentUserId(token);
-            //queryAnimeProgress(<media_id>, <user_id>, token);
+            const session_data = {}
+            queryCurrentUserId(token)
+                .then((res) => {
+                    session_data.user_id = res.data.Viewer.id;
+                    return queryAnimeMediaId(text, token);
+                })
+                .then((res) => {
+                    session_data.media_id = res.data.Media.id;
+                    return queryAnimeProgress(session_data.media_id, session_data.user_id, token)
+                })
+                .then(res => {
+                    appendLineBreakToApp();
+                    appendLineBreakToApp();
+                    appendTextToApp(res.data.MediaList.progress)
+                });
 		}
 	});
 
@@ -40,12 +53,20 @@ function computePopupTextContent(key, default_value){
 }
 
 /**
- * Append a text node ot the div with the app id
+ * Append a text node to the div with the app id
  * @param {string} text The text that popualtes the text node
  */
 function appendTextToApp(text){
     const token_msg_node = document.createTextNode(text);
     app_node.appendChild(token_msg_node);
+}
+
+/**
+ * Append a line break node to div with the app id
+ */
+function appendLineBreakToApp(){
+    const br = document.createElement("br");
+    app_node.appendChild(br);
 }
 
 /**
@@ -107,8 +128,7 @@ function queryCurrentUserId(access_token){
 
     const variables = {};
 
-    queryAnilistAPI(query, variables, access_token)
-        .then(res => console.log(res));
+    return queryAnilistAPI(query, variables, access_token)
 }
 
 /**
@@ -142,16 +162,26 @@ function queryAnimeProgress(media_id, user_id, access_token){
 	    "userId": user_id
 	};
 
-    queryAnilistAPI(query, variables, access_token)
-        .then(handleData)
-        .catch(handleError);
+    return queryAnilistAPI(query, variables, access_token)
+}
 
-	function handleData(data) {
-		console.log(data)
-	}
+/**
+ * Search for an anime title to and obtain its mediaId
+ * @param {string} anime_name Name of the anime to search for
+ * @param {string} access_token OAuth token for accessing the api
+ */
+function queryAnimeMediaId(anime_name, access_token){
+	const query =`
+    query($search: String){
+        Media(search: $search){
+            id
+        }  
+    }`;
 
-	function handleError(error) {
-	    console.log(error);
-	}
+	const variables = {
+	    "search": anime_name,
+	};
+
+    return queryAnilistAPI(query, variables, access_token)
 }
 
