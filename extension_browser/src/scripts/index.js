@@ -1,100 +1,63 @@
-// Node that contains the main app information
-const app_node = document.getElementById("app");
+/**
+ * State enum to be used in the Authenticator object.
+ */
+const State = Object.freeze({"UNAUTHORIZED": 0, "FAILED": 1, "TOKEN": 2, "URL": 3});
 
 /**
- * Make a request to the server for either a link or 
- * an access token which helps us determine what to
- * display to the user:
- * - A  login link to the Anilist API auth website
- * - An anime title for the most recently seen anime
+ * A class that will ping the server for either an authentication
+ * URL to redirect to or an access token to the Anilist API.
+ *
  */
-fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors",})
-	.then(res => res.json())
-	.then(res_json => {
-		if(!res_json.success){
-			console.error("Could not fetch data")
-		}
-		if(res_json.type === "url"){
-            let text = "Log into Anilist";
-            let url = res_json.data;
-            appendURLToApp(text, url);
-		} else if (res_json.type === "token") {
-			let text = computePopupTextContent("CRTitle", "No anime yet!");
-			let token = res_json.data;
-            if(text === "No anime yet!") return;
-            appendTextToApp(text);
-            const session_data = {}
-            queryCurrentUserId(token)
-                .then((res) => {
-                    session_data.user_id = res.data.Viewer.id;
-                    return queryAnimeMediaId(text, token);
-                })
-                .then((res) => {
-                    session_data.media_id = res.data.Media.id;
-                    return queryAnimeProgress(session_data.media_id, session_data.user_id, token)
-                })
-                .then(res => {
-                    session_data.id = res.data.MediaList.id;
-                    session_data.progress = res.data.MediaList.progress;
-                    appendLineBreakToApp();
-                    appendLineBreakToApp();
-                    //TODO: Make this a button element
-                    //TODO: Add a decrement button too
-                    //TODO: Mutate the value of progress on the screen in real time
-                    appendTextToApp(session_data.progress,
-                        increment_progress.bind(null, session_data.id, session_data.progress, token));
-                });
-		}
-	});
+class Authenticator{
 
-/**
- * Attempt to grab a key from localStorage and if it does
- * not exist return a default value.
- * @param {string} key The key to try and locate in browser local storage
- * @param {string} default_value Return if key is not in browser local storage
- */
-function computePopupTextContent(key, default_value){
-	const text = localStorage.getItem(key)
-	if(!text) return default_value
-	return text
-}
-
-/**
- * Append a text node to the div with the app id
- * @param {string} text The text that popualtes the text node
- */
-function appendTextToApp(text, onclick_func){
-    const token_msg_node = document.createTextNode(text);
-    let node_to_append = token_msg_node;
-    if (onclick_func){
-        const div_wrapper = document.createElement("div");
-        div_wrapper.onclick = onclick_func;
-        div_wrapper.appendChild(token_msg_node);
-        node_to_append = div_wrapper;
+    constructor(){
+        this.state = State.UNAUTHORIZED;
+        this.url = null;
+        this.token = null;
     }
-    app_node.appendChild(node_to_append);
-}
 
-/**
- * Append a line break node to div with the app id
- */
-function appendLineBreakToApp(){
-    const br = document.createElement("br");
-    app_node.appendChild(br);
-}
+    /**
+     * Make a request to the server for either a link or 
+     * an access token which helps us determine what to
+     * display to the user:
+     * - A  login link to the Anilist API auth website
+     * - An anime title for the most recently seen anime
+     */
+    authenticate(){
+        return fetch("http://localhost:5000/get_auth_url_or_token", {mode: "cors"})
+            .then(res => res.json())
+            .then(res_json => {
+                if(!res_json.success){
+                    this.state = State.FAILED;
+                    return this;
+                }
+                if(res_json.type === "url"){
+                    this.state = State.URL;
+                    this.url = res_json.data;
+                } else if (res_json.type === "token") {
+                    this.state = State.TOKEN;
+                    this.token = res_json.data;
+                } else {
+                    //pass
+                }
+                return this;
+        });
+    }
 
-/**
- * Append a <a> tag to the div with the app id
- * @param {string} text The text for the link
- * @param {string} link The actual url you get directed to upon clicking the link
- */
-function appendURLToApp(text, link){
-    const auth_url_node = document.createElement("a");
-    const auth_url_text_node = document.createTextNode(text);
-    auth_url_node.append(auth_url_text_node);
-    auth_url_node.title = text;
-    auth_url_node.href = link;
-    app_node.appendChild(auth_url_node);
+    /**
+     * Indicates that we must first authenticate
+     * via the redirect URL
+     */
+    isUrlMode(){
+        return this.state === State.URL;
+    }
+
+    /**
+     * Indicates that we have an access token ready to go
+     */
+    isTokenMode(){
+        return this.state === State.TOKEN;
+    }
 }
 
 /**

@@ -4,4 +4,4 @@ function updateStorage(request){
     }
 }
 
-browser.runtime.onMessage.addListener(updateStorage)
+browser.runtime.onMessage.addListener(updateStorage);

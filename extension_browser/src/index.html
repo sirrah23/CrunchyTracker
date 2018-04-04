@@ -2,10 +2,31 @@
 <html>
     <head>
         <title>CrunchyTracker</title>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     </head>
     <body>
         <div id="app">
+            <h1>Crunchy Tracker</h1>
+            <div v-if="mode && mode==='URL'" >
+                <a :href="url">Log into Anilist</a>
+            </div>
+            <div v-else-if="mode && mode==='TOKEN'" >
+                {{display_title}}
+            </div>
+            <div v-else-if="mode && mode==='ERROR'" >
+                {{error_message}}
+            </div>
+            <div v-else=>
+                LOADING...
+            </div>
+            <div v-if="progress > 0">
+                <button>+</button>
+                <p>{{progress}}</p>
+                <button>-</button>
+            </div>
+            <p v-if="progress > 0">{{progress}}</p>
         </div>
         <script src="scripts/index.js" type="text/javascript"></script>
+        <script src="scripts/app.js" type="text/javascript"></script>
     </body>
-</html> 
+</html>
