@@ -19,14 +19,14 @@
             <div v-else=>
                 LOADING...
             </div>
-            <div v-if="progress > 0">
-                <button>+</button>
-                <p>{{progress}}</p>
-                <button>-</button>
+            <div v-if="progress > 0" style="display:inline-block">
+                <button style="float:left;margin:8px">-</button>
+                <p style="float:left;margin:8px">{{progress}}</p>
+                <button style="float:left;margin:8px">+</button>
             </div>
-            <p v-if="progress > 0">{{progress}}</p>
         </div>
-        <script src="scripts/index.js" type="text/javascript"></script>
+        <script src="scripts/auth.js" type="text/javascript"></script>
+        <script src="scripts/api.js" type="text/javascript"></script>
         <script src="scripts/app.js" type="text/javascript"></script>
     </body>
 </html>

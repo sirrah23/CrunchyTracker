@@ -1,4 +1,8 @@
 const authenticator = new Authenticator();
+let AnilistAPIConn,
+    user_id,
+    media_id,
+    media_list_entry_id;
 
 const app = new Vue({
     el: "#app",
@@ -32,11 +36,26 @@ const app = new Vue({
                 if(crtitle){
                     app.title = crtitle;
                 }
-            });
-            /*
-            .then(() => {
-                Fetch progress # for anime title here
             })
-            */
+            .then(() => {
+                if(app.mode === "TOKEN")
+                    AnilistAPIConn = getAnilistAPIConnector(authenticator.token);
+                if(!app.title)
+                    return;
+                AnilistAPIConn.queryCurrentUserId()
+                    .then(res => {
+                        user_id = res.data.Viewer.id;
+                        return AnilistAPIConn.queryAnimeMediaId(app.title);
+                    })
+                    .then(res =>{
+                        media_id = res.data.Media.id;
+                        return AnilistAPIConn.queryAnimeProgress(media_id, user_id);
+                    })
+                    .then(res => {
+                        if(!res.data.MediaList) return; //Not Following
+                        media_list_entry_id = res.data.MediaList.id;
+                        app.progress = res.data.MediaList.progress;
+                    });
+            });
     }
 });
