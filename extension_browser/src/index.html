@@ -24,7 +24,7 @@
                 <p style="float:left;margin:8px">{{progress}}</p>
                 <button @click="increment_progress" style="float:left;margin:8px">+</button>
             </div>
-            <div v-else>
+            <div v-else-if="mode && mode==='TOKEN'">
                 You are not following this anime
             </div>
         </div>
