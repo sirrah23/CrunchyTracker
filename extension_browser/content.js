@@ -1,5 +1,3 @@
-console.log("******Content script is running!******");
-
 let title = null;
 const els = document.getElementsByTagName("span");
 for(let i = 0; i < els.length; i++){
