@@ -135,6 +135,11 @@ function getAnilistAPIConnector(access_token){
             return this.mutateMediaListEntityProgress(id, progress+1);
         },
 
+        /**
+        * Decrement whatever the input progress is by one and call the API to make that update as well.
+        * @param {int} id Id of the media list entry to mutate
+        * @param {int} progress New progress value to decrement and set for the media list entry
+        */
         decrementProgress(id, progress){
             return this.mutateMediaListEntityProgress(id, progress-1);
         },
