@@ -87,8 +87,9 @@ function getAnilistAPIConnector(access_token){
         queryAnimeMediaId(anime_name){
             const query =`
                 query($search: String){
-                    Media(search: $search){
-                        id
+                    Media(search: $search, type: ANIME){
+                        id,
+                        siteUrl
                     }
                 }`;
 
@@ -130,10 +131,13 @@ function getAnilistAPIConnector(access_token){
         * @param {int} id Id of the media list entry to mutate
         * @param {int} progress New progress value to increment and set for the media list entry
         */
-        increment_progress(id, progress){
-            return mutateMediaListEntityProgress(id, progress+1);
-        }
+        incrementProgress(id, progress){
+            return this.mutateMediaListEntityProgress(id, progress+1);
+        },
 
+        decrementProgress(id, progress){
+            return this.mutateMediaListEntityProgress(id, progress-1);
+        },
     };
 
 }

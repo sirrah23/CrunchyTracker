@@ -12,14 +12,25 @@ const app = new Vue({
         "default_title": "No anime yet",
         "error_message": "Something went wrong",
         "title": "",
+        "url": "",
         progress: -1
+    },
+    methods:{
+        increment_progress(){
+            AnilistAPIConn.incrementProgress(media_list_entry_id, this.progress)
+                .then(res => app.progress = res.data.UpdateMediaListEntries[0].progress) 
+        },
+        decrement_progress(){
+            AnilistAPIConn.decrementProgress(media_list_entry_id, this.progress)
+                .then(res => app.progress = res.data.UpdateMediaListEntries[0].progress) 
+        }
     },
     computed:{
         display_title(){
             return this.title.length > 0 ? this.title : this.default_title;
-        }
+        },
     },
-    mounted: function(){
+    created: function(){
         authenticator.authenticate()
             .then(a => {
                 if(a.isUrlMode()){
@@ -49,13 +60,14 @@ const app = new Vue({
                     })
                     .then(res =>{
                         media_id = res.data.Media.id;
+                        this.url = res.data.Media.siteUrl;
                         return AnilistAPIConn.queryAnimeProgress(media_id, user_id);
                     })
                     .then(res => {
                         if(!res.data.MediaList) return; //Not Following
                         media_list_entry_id = res.data.MediaList.id;
                         app.progress = res.data.MediaList.progress;
-                    });
+                    })
             });
     }
 });
