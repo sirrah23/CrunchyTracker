@@ -1,4 +1,6 @@
 const authenticator = new Authenticator();
+
+// Is there a better place to put these variables?
 let AnilistAPIConn,
     user_id,
     media_id,
