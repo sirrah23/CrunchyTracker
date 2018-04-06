@@ -25,7 +25,7 @@
                 <button @click="increment_progress" style="float:left;margin:8px">+</button>
             </div>
             <div v-else-if="mode && mode==='TOKEN'">
-                You are not following this anime
+                <button @click="follow_anime">Start following</button>
             </div>
         </div>
         <script src="scripts/auth.js" type="text/javascript"></script>

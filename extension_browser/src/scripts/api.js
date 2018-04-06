@@ -102,6 +102,32 @@ function getAnilistAPIConnector(access_token){
 
 
         /**
+         * Given a user and anime id create an Anilist follow with zero-progress
+         * for the (user, anime) pair.
+         * @param {int} media_id ID of the anime
+         * @param {int} user_id ID of the user
+         */
+        createMediaListEntity(media_id){
+            const mutation=`
+            mutation($mediaId: Int, $progress: Int, $status: MediaListStatus){
+                SaveMediaListEntry(mediaId: $mediaId, progress: $progress, status: $status){
+                    id,
+                    userId,
+                    mediaId,
+                    progress
+                }
+            }`;
+
+            const variables = {
+                "mediaId": media_id,
+                "progress": 0,
+                "status": "CURRENT"
+            };
+
+            return this.callAnilistAPI(mutation, variables);
+        },
+
+        /**
         * Mutate a media list entries progress field to whatever
         * value you want.
         * @param {int} id Id of the media list entry to mutate
