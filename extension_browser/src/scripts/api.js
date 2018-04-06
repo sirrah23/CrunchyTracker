@@ -102,10 +102,9 @@ function getAnilistAPIConnector(access_token){
 
 
         /**
-         * Given a user and anime id create an Anilist follow with zero-progress
-         * for the (user, anime) pair.
+         * Given an anime id create an Anilist follow with zero-progress
+         * for the user.
          * @param {int} media_id ID of the anime
-         * @param {int} user_id ID of the user
          */
         createMediaListEntity(media_id){
             const mutation=`
