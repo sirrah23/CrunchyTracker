@@ -13,16 +13,19 @@ const app = new Vue({
         "title": "",
         "url": "",
         progress: -1,
+        episodes : 0,
         user_id: null,
         media_id: null,
         media_list_entry_id: null
     },
     methods:{
         increment_progress(){
+            if(this.progress === this.episodes) return; //Can't see more episodes than there are #s
             AnilistAPIConn.incrementProgress(app.media_list_entry_id, this.progress)
                 .then(res => app.progress = res.data.UpdateMediaListEntries[0].progress);
         },
         decrement_progress(){
+            if(this.progress === 0) return; //Can't see less than zero episodes
             AnilistAPIConn.decrementProgress(app.media_list_entry_id, this.progress)
                 .then(res => app.progress = res.data.UpdateMediaListEntries[0].progress);
         },
@@ -70,6 +73,7 @@ const app = new Vue({
                     .then(res =>{
                         app.media_id = res.data.Media.id;
                         this.url = res.data.Media.siteUrl;
+                        this.episodes = res.data.Media.episodes;
                         return AnilistAPIConn.queryAnimeProgress(app.media_id, app.user_id);
                     })
                     .then(res => {

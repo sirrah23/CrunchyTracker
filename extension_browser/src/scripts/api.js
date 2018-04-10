@@ -89,7 +89,8 @@ function getAnilistAPIConnector(access_token){
                 query($search: String){
                     Media(search: $search, type: ANIME){
                         id,
-                        siteUrl
+                        siteUrl,
+                        episodes
                     }
                 }`;
 
