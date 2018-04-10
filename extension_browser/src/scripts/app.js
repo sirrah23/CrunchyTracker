@@ -92,7 +92,7 @@ const app = new Vue({
                 }
             })
             .then(() => {
-                if(app.state !== app_state.TOKEN) return;
+                if(!app.is_token()) return;
 
                 if(!app.title){
                     app.state = app_state.NO_ANIME;
@@ -104,7 +104,6 @@ const app = new Vue({
 
                 AnilistAPIConn.queryCurrentUserId()
                     .then(res => {
-                        console.log(app.state);
                         app.user_id = res.data.Viewer.id;
                         return AnilistAPIConn.queryAnimeMediaId(app.title);
                     })
