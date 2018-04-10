@@ -7,24 +7,27 @@
     <body>
         <div id="app">
             <h1>Crunchy Tracker</h1>
-            <div v-if="mode && mode==='URL'" >
+            <div v-if="is_waiting()">
+                Loading...
+            </div>
+            <div v-else-if="is_url()" >
                 <a :href="url">Log into Anilist</a>
             </div>
-            <div v-else-if="mode && mode==='TOKEN'" >
+            <div v-else-if="is_anime_following() || is_anime_not_following()" >
                 <h2><a :href="url">{{display_title}}</a></h2>
             </div>
-            <div v-else-if="mode && mode==='ERROR'" >
+            <div v-else-if="is_error()" >
                 {{error_message}}
             </div>
             <div v-else>
                 LOADING...
             </div>
-            <div v-if="progress >= 0" style="display:inline-block">
+            <div v-if="is_anime_following()" style="display:inline-block">
                 <button @click="decrement_progress" style="float:left;margin:8px">-</button>
                 <p style="float:left;margin:8px">{{progress}}</p>
                 <button @click="increment_progress" style="float:left;margin:8px">+</button>
             </div>
-            <div v-else-if="mode && mode==='TOKEN'">
+            <div v-else-if="is_anime_not_following()">
                 <button @click="follow_anime">Start following</button>
             </div>
         </div>

@@ -1,17 +1,26 @@
 const authenticator = new Authenticator();
 
-// Is there a better place to put these variables?
+const app_state = {
+    WAITING_SERVER:       0,
+    URL:                  1,
+    TOKEN:                2,
+    NO_ANIME:             3,
+    WAITING_API:          4,
+    ANIME_FOLLOWING:      5,
+    ANIME_NOT_FOLLOWING:  6
+}
+
 let AnilistAPIConn;
 
 const app = new Vue({
     el: "#app",
     data: {
-        "mode": null,
-        "url": null,
-        "default_title": "No anime yet",
-        "error_message": "Something went wrong",
-        "title": "",
-        "url": "",
+        state: app_state.WAITING_SERVER,
+        url: null,
+        default_title: "No anime yet",
+        error_message: "Something went wrong",
+        title: "",
+        url: "",
         progress: -1,
         episodes : 0,
         user_id: null,
@@ -35,6 +44,28 @@ const app = new Vue({
                     app.media_list_entry_id = res.data.SaveMediaListEntry.id;
                     app.progress = res.data.SaveMediaListEntry.progress;
                 });
+        },
+        is_waiting(){
+            return this.state ===  app_state.WAITING_SERVER || this.state === app_state.WAITING_SERVER
+
+        },
+        is_url(){
+            return this.state === app_state.URL;
+        },
+        is_token(){
+            return this.state === app_state.TOKEN;
+        },
+        is_no_anime(){
+            return this.state === app_state.NO_ANIME;
+        },
+        is_anime_not_following(){
+            return this.state === app_state.ANIME_NOT_FOLLOWING;
+        },
+        is_anime_following(){
+            return this.state === app_state.ANIME_FOLLOWING;
+        },
+        is_error(){
+            return this.state === app_state.ERROR;
         }
     },
     computed:{
@@ -46,12 +77,12 @@ const app = new Vue({
         authenticator.authenticate()
             .then(a => {
                 if(a.isUrlMode()){
-                    app.mode = "URL";
+                    app.state = app_state.URL;
                     app.url = a.url;
                 } else if (a.isTokenMode()) {
-                    app.mode = "TOKEN";
+                    app.state = app_state.TOKEN;
                 } else {
-                    app.mode = "ERROR";
+                    app.state = app_state.ERROR;
                 }
             })
             .then(() => {
@@ -61,12 +92,19 @@ const app = new Vue({
                 }
             })
             .then(() => {
-                if(app.mode === "TOKEN")
-                    AnilistAPIConn = getAnilistAPIConnector(authenticator.token);
-                if(!app.title)
+                if(app.state !== app_state.TOKEN) return;
+
+                if(!app.title){
+                    app.state = app_state.NO_ANIME;
                     return;
+                }
+
+                AnilistAPIConn = getAnilistAPIConnector(authenticator.token);
+                app.state = app_state.WAITING_API;
+
                 AnilistAPIConn.queryCurrentUserId()
                     .then(res => {
+                        console.log(app.state);
                         app.user_id = res.data.Viewer.id;
                         return AnilistAPIConn.queryAnimeMediaId(app.title);
                     })
@@ -77,9 +115,12 @@ const app = new Vue({
                         return AnilistAPIConn.queryAnimeProgress(app.media_id, app.user_id);
                     })
                     .then(res => {
-                        if(!res.data.MediaList) return; //Not Following
+                        if(!res.data.MediaList){
+                            app.state = app_state.ANIME_NOT_FOLLOWING;
+                        }
                         app.media_list_entry_id = res.data.MediaList.id;
                         app.progress = res.data.MediaList.progress;
+                        app.state = app_state.ANIME_FOLLOWING;
                     });
             });
     }
